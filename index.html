@@ -1,0 +1,277 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>React Tutorial</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.7/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.7/react-dom.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.2.1/lodash.min.js"></script>
+    <script src="http://momentjs.com/downloads/moment.min.js"></script>
+    <script src="https://api.trello.com/1/client.js?key=2e423eeab19aa698eb67ca94ee66983f"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/js/bootstrap.js" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd" crossorigin="anonymous">
+
+    <style media="screen" type="text/css">
+        .row {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+</body>
+<script type="text/babel">
+var TrelloCleaner = React.createClass({
+    getInitialState: function () {
+        return {
+            currentOrg: null
+        };
+    },
+    handleOrganizationChange: function (currentOrg) {
+        this.setState({currentOrg: currentOrg});
+    },
+    render: function () {
+        return (
+            <div className="container">
+                <div className="row">
+                    <div className="col-sm-12">
+                        <nav className="navbar navbar-dark bg-primary">
+                            <a className="navbar-brand" href="#">Trello Cleaner</a>
+                            <div className="nav navbar-nav pull-right">
+                                <a className="nav-item nav-link">{this.props.member.fullName}</a>
+                            </div>
+                        </nav>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-8">
+                        <OrganizationList onOrganizationChange={this.handleOrganizationChange} currentOrg={this.state.currentOrg} idOrganizations={this.props.idOrganizations} />
+                    </div>
+                    <div className="col-sm-4">
+                        <BoardFilters />
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-sm-12">
+                        <BoardList currentOrg={this.state.currentOrg} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+});
+
+var OrganizationList = React.createClass({
+    getInitialState: function () {
+        return {
+            organizations: [],
+            defaultOrganization: null
+        }
+    },
+    componentDidMount: function () {
+        this.props.idOrganizations.map(function (idOrganization) {
+            Trello.organizations.get(
+                idOrganization,
+                {fields: "id,name,idBoards,logoHash"},
+                _.bind(function (organization) {
+                    this.setState({organizations: _.sortBy(this.state.organizations.concat([organization]), 'name')});
+
+                    // select the first organization once they are all fetched.
+                    if (this.state.organizations.length == this.props.idOrganizations.length && _.isNull(this.props.currentOrg)) {
+                        this.props.onOrganizationChange(this.state.organizations[0])
+                    }
+                }, this)
+            );
+        }, this)
+    },
+    render: function () {
+        var organizationsList = this.state.organizations.map(function (organization) {
+            return <OrganizationLink onOrganizationChange={this.props.onOrganizationChange} currentOrg={this.props.currentOrg} key={organization.id} organization={organization} />;
+        }, this);
+
+        return (
+            <div className="btn-group">
+                <button type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <Organization organization={this.props.currentOrg} />
+                </button>
+                <div className="dropdown-menu">
+                    {organizationsList}
+                </div>
+            </div>
+        );
+    }
+});
+
+var Organization = React.createClass({
+    propTypes: {
+        organization: React.PropTypes.object
+    },
+    render: function () {
+        var logo = null;
+
+        if (_.isNull(this.props.organization)) {
+            return null;
+        }
+
+        if (!_.isNil(this.props.organization.logoHash)) {
+            logo = <OrganizationLogo logoHash={this.props.organization.logoHash} />
+        }
+
+        return (
+            <span>
+                {logo}
+                {this.props.organization.name} ({this.props.organization.idBoards.length})
+            </span>
+        );
+    }
+});
+
+var OrganizationLogo = React.createClass({
+    propTypes: {
+        logoHash: React.PropTypes.string
+    },
+    render: function () {
+        return (
+            <span><img src={"https://trello-logos.s3.amazonaws.com/" + this.props.logoHash + "/30.png"} className="img-rounded" />&nbsp;</span>
+        );
+    }
+});
+
+var OrganizationLink = React.createClass({
+    handleOrganizationChange: function (e, value) {
+        this.props.onOrganizationChange(this.props.organization);
+    },
+    render: function () {
+        return (
+            <a onClick={this.handleOrganizationChange} className={"dropdown-item" + (this.props.currentOrg == this.props.organization ? " active" : "") } href={"/#" + this.props.organization.name}>
+                <Organization organization={this.props.organization} />
+            </a>
+        );
+    }
+});
+
+var BoardList = React.createClass({
+    getInitialState: function () {
+        return {
+            boards: []
+        }
+    },
+    componentDidUpdate: function (prevProps, prevState) {
+        if (prevProps.currentOrg == this.props.currentOrg) {
+            return;
+        }
+
+        Trello.get(
+            '/organizations/' + this.props.currentOrg.id + '/boards',
+            {},
+            _.bind(function (boards) {
+                this.replaceState({boards: _.sortBy(boards, ['name', 'dateLastActivity'])});
+            }, this)
+        );
+    },
+    render: function () {
+        var boardList = null;
+        if (this.props.currentOrg != null ) {
+            boardList = this.state.boards.map(function (board) {
+                return <Board key={board.id} board={board} />;
+            });
+        }
+
+        return (
+            <ul className="list-group">
+            {boardList}
+            </ul>
+        );
+    }
+});
+
+var Board = React.createClass({
+    getInitialState: function () {
+        return {
+            admins: [],
+            boardClosed: this.props.board.closed
+        };
+    },
+    handleClick: function () {
+        console.log(this.props.board.closed);
+        Trello.put(
+            '/boards/'+this.props.board.id +'/closed',
+            {value: !this.state.boardClosed},
+            _.bind(function () {
+                this.setState({boardClosed: !this.state.boardClosed});
+            }, this),
+            function (error) { alert(error.responseText); }
+        );
+    },
+    render: function () {
+        var date = null != this.props.board.dateLastActivity ? 'last updated on ' + moment(this.props.board.dateLastActivity).fromNow() : 'may be inactive for a long time'
+            , boardName = this.state.boardClosed ? <s>{this.props.board.name}</s> : <strong>{this.props.board.name}</strong>
+        ;
+
+        return (
+            <li className="list-group-item clearfix">
+                <div className="checkbox pull-left">
+                    <label htmlFor={this.props.board.id}>
+                        <input type="checkbox" name={this.props.board.name} defaultChecked={!this.props.board.closed} id={this.props.board.id} onClick={this.handleClick} />
+                        {boardName}
+                    </label>
+                    &nbsp;<small className="text-muted">{date}</small>
+                </div>
+                <div className="pull-right">
+                    <a href={this.props.board.shortUrl} target="_blank"><i className="fa fa-external-link"></i>&nbsp;{this.props.board.shortUrl}</a>
+                </div>
+            </li>
+        );
+    }
+});
+
+var BoardFilters = React.createClass({
+    render: function () {
+        return (
+            <ul className="nav nav-pills" id="filters">
+                <li className="nav-item">
+                    <a className="nav-link" data-filter="null" href="#">All</a>
+                </li>
+                <li className="nav-item">
+                    <a className="nav-link" data-filter="closed" href="#">Closed</a>
+                </li>
+                <li className="nav-item">
+                    <a className="nav-link" data-filter="opened" href="#">Opened</a>
+                </li>
+                <li className="nav-item">
+                    <a className="nav-link" data-filter="inactive" href="#">Inactive</a>
+                </li>
+            </ul>
+        );
+    }
+});
+
+Trello.authorize({
+    type: "popup",
+    name: "Trello cleaner by Theodo",
+    scope: {
+        read: true,
+        write: true
+    },
+    success: function () {
+        Trello.members.get(
+            'me',
+            function (member) {
+                ReactDOM.render(<TrelloCleaner member={member} idOrganizations={member.idOrganizations} />, document.getElementById('app'));
+            },
+            function (error) {
+                alert("Oops"); console.log(error);
+            }
+        );
+    },
+    error: function () {
+        console.log("Failed authentication");
+    }
+});
+</script>
+</html>
