@@ -34,7 +34,10 @@ var TrelloCleaner = React.createClass({
         };
     },
     handleOrganizationChange: function (currentOrg) {
-        this.setState({currentOrg: currentOrg});
+        this.setState({
+            currentOrg: currentOrg,
+            filter: null
+        });
     },
     handleFilterBoards: function (filter) {
         this.setState({filter: filter});
