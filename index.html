@@ -29,11 +29,15 @@
 var TrelloCleaner = React.createClass({
     getInitialState: function () {
         return {
-            currentOrg: null
+            currentOrg: null,
+            filter: null
         };
     },
     handleOrganizationChange: function (currentOrg) {
         this.setState({currentOrg: currentOrg});
+    },
+    handleFilterBoards: function (filter) {
+        this.setState({filter: filter});
     },
     render: function () {
         return (
@@ -53,12 +57,12 @@ var TrelloCleaner = React.createClass({
                         <OrganizationList onOrganizationChange={this.handleOrganizationChange} currentOrg={this.state.currentOrg} idOrganizations={this.props.idOrganizations} />
                     </div>
                     <div className="col-sm-4">
-                        <BoardFilters />
+                        <BoardFilters onFilter={this.handleFilterBoards} filter={this.state.filter} />
                     </div>
                 </div>
                 <div className="row">
                     <div className="col-sm-12">
-                        <BoardList currentOrg={this.state.currentOrg} />
+                        <BoardList currentOrg={this.state.currentOrg} filter={this.state.filter}>No boards found.</BoardList>
                     </div>
                 </div>
             </div>
@@ -158,28 +162,57 @@ var OrganizationLink = React.createClass({
 var BoardList = React.createClass({
     getInitialState: function () {
         return {
-            boards: []
+            boards: [],
+            filteredBoards: [],
+            filter: null
         }
     },
     componentDidUpdate: function (prevProps, prevState) {
-        if (prevProps.currentOrg == this.props.currentOrg) {
-            return;
+        if (prevProps.currentOrg != this.props.currentOrg) {
+            Trello.get(
+                '/organizations/' + this.props.currentOrg.id + '/boards',
+                {},
+                _.bind(function (boards) {
+                    this.setState({boards: _.sortBy(boards, 'name')});
+                    this.filterBoards(boards);
+                }, this)
+            );
         }
 
-        Trello.get(
-            '/organizations/' + this.props.currentOrg.id + '/boards',
-            {},
-            _.bind(function (boards) {
-                this.replaceState({boards: _.sortBy(boards, ['name', 'dateLastActivity'])});
-            }, this)
-        );
+        console.log(prevProps, this.props);
+        if (prevProps.filter != this.props.filter) {
+             this.filterBoards(this.state.boards);
+        }
+    },
+    filterBoards: function (boards) {
+        var filteredBoards = this.state.boards;
+
+        switch (this.props.filter) {
+            case filters.CLOSED:
+                filteredBoards = _.filter(boards, 'closed');
+                break;
+            case filters.OPENED:
+                filteredBoards = _.filter(boards, {'closed': false});
+                break;
+            case filters.INACTIVE:
+                filteredBoards = _.filter(boards, function (board) {
+                    return moment().diff(moment(board.dateLastActivity), 'month') > 2;
+                });
+                break;
+        }
+
+        this.setState({filteredBoards: filteredBoards});
     },
     render: function () {
         var boardList = null;
         if (this.props.currentOrg != null ) {
-            boardList = this.state.boards.map(function (board) {
+            boardList = this.state.filteredBoards.map(function (board) {
                 return <Board key={board.id} board={board} />;
             });
+        }
+
+        if (_.isEmpty(boardList)) {
+            return (<p className="text-sm-center lead">{this.props.children}</p>);
         }
 
         return (
@@ -223,30 +256,60 @@ var Board = React.createClass({
                     &nbsp;<small className="text-muted">{date}</small>
                 </div>
                 <div className="pull-right">
-                    <a href={this.props.board.shortUrl} target="_blank"><i className="fa fa-external-link"></i>&nbsp;{this.props.board.shortUrl}</a>
+                    <a href={this.props.board.shortUrl} target="_blank">{this.props.board.shortUrl}&nbsp;<i className="fa fa-external-link"></i></a>
                 </div>
             </li>
         );
     }
 });
 
+const filters = {
+    RESET: null,
+    CLOSED: "closed",
+    OPENED: "opened",
+    INACTIVE: "inactive"
+}
+
 var BoardFilters = React.createClass({
     render: function () {
         return (
-            <ul className="nav nav-pills" id="filters">
+            <ul className="nav nav-pills" id="filter">
                 <li className="nav-item">
-                    <a className="nav-link" data-filter="null" href="#">All</a>
+                    <Filter isActive={this.props.filter == filters.RESET} filter={filters.RESET} onFilter={this.props.onFilter}>All</Filter>
                 </li>
                 <li className="nav-item">
-                    <a className="nav-link" data-filter="closed" href="#">Closed</a>
+                    <Filter isActive={this.props.filter == filters.CLOSED} filter={filters.CLOSED} onFilter={this.props.onFilter}>Closed</Filter>
                 </li>
                 <li className="nav-item">
-                    <a className="nav-link" data-filter="opened" href="#">Opened</a>
+                    <Filter isActive={this.props.filter == filters.OPENED} filter={filters.OPENED} onFilter={this.props.onFilter}>Opened</Filter>
                 </li>
                 <li className="nav-item">
-                    <a className="nav-link" data-filter="inactive" href="#">Inactive</a>
+                    <Filter isActive={this.props.filter == filters.INACTIVE} filter={filters.INACTIVE} onFilter={this.props.onFilter}>Inactive</Filter>
                 </li>
             </ul>
+        );
+    }
+});
+
+var Filter = React.createClass({
+    propTypes: {
+        isActive: React.PropTypes.boolean,
+        filter: React.PropTypes.string,
+        onFilter: React.PropTypes.func
+    },
+    getDefaultProps: function () {
+        return {
+            filter: null,
+            isActive: false
+        }
+    },
+    handleClick: function (e) {
+        e.stopPropagation();
+        this.props.onFilter(this.props.filter);
+    },
+    render: function () {
+        return (
+            <a onClick={this.handleClick} className={"nav-link" + (this.props.isActive ? " active" : "")} href="#">{this.props.children}</a>
         );
     }
 });
