@@ -27,20 +27,33 @@
 </body>
 <script type="text/babel">
 var TrelloCleaner = React.createClass({
-    getInitialState: function () {
+    getDefaulSort: function () {
         return {
+            sortAttribute: sorts.ATTRIBUTES.NAME,
+            sortOrder: sorts.ORDER.ASC
+        };
+    },
+    getInitialState: function () {
+        var initialState = {
             currentOrg: null,
             filter: null
         };
+
+        return _.merge(initialState, this.getDefaulSort());
     },
     handleOrganizationChange: function (currentOrg) {
-        this.setState({
+        this.setState(_.merge({
             currentOrg: currentOrg,
-            filter: null
-        });
+        }, this.getDefaulSort()));
     },
     handleFilterBoards: function (filter) {
         this.setState({filter: filter});
+    },
+    handleSortBoards: function (sortAttribute, sortOrder) {
+        this.setState({
+            sortAttribute: sortAttribute,
+            sortOrder: sortOrder
+        });
     },
     render: function () {
         return (
@@ -56,8 +69,11 @@ var TrelloCleaner = React.createClass({
                     </div>
                 </div>
                 <div className="row">
-                    <div className="col-sm-8">
+                    <div className="col-sm-4">
                         <OrganizationList onOrganizationChange={this.handleOrganizationChange} currentOrg={this.state.currentOrg} idOrganizations={this.props.idOrganizations} />
+                    </div>
+                    <div className="col-sm-4">
+                        <BoardSorters onSort={this.handleSortBoards} sortAttribute={this.state.sortAttribute} sortOrder={this.state.sortOrder} />
                     </div>
                     <div className="col-sm-4">
                         <BoardFilters onFilter={this.handleFilterBoards} filter={this.state.filter} />
@@ -65,7 +81,12 @@ var TrelloCleaner = React.createClass({
                 </div>
                 <div className="row">
                     <div className="col-sm-12">
-                        <BoardList currentOrg={this.state.currentOrg} filter={this.state.filter}>No boards found.</BoardList>
+                        <BoardList
+                            currentOrg={this.state.currentOrg}
+                            filter={this.state.filter}
+                            sortAttribute={this.state.sortAttribute}
+                            sortOrder={this.state.sortOrder}
+                        >No boards found.</BoardList>
                     </div>
                 </div>
             </div>
@@ -176,19 +197,26 @@ var BoardList = React.createClass({
                 '/organizations/' + this.props.currentOrg.id + '/boards',
                 {},
                 _.bind(function (boards) {
-                    this.setState({boards: _.sortBy(boards, 'name')});
-                    this.filterBoards(boards);
+                    this.setState({filteredBoards: this.sortBoards(this.filterBoards(boards)), boards: boards});
                 }, this)
             );
         }
 
-        console.log(prevProps, this.props);
         if (prevProps.filter != this.props.filter) {
-             this.filterBoards(this.state.boards);
+             this.setState({filteredBoards: this.filterBoards(this.state.boards)});
+        }
+
+        if (prevProps.sortAttribute != this.props.sortAttribute || prevProps.sortOrder != this.props.sortOrder) {
+            this.setState({filteredBoards: this.sortBoards(this.state.filteredBoards)});
         }
     },
+    sortBoards: function (boards) {
+        var boards = _.orderBy(boards, [this.props.sortAttribute], [this.props.sortOrder]);
+
+        return boards;
+    },
     filterBoards: function (boards) {
-        var filteredBoards = this.state.boards;
+        var filteredBoards = boards;
 
         switch (this.props.filter) {
             case filters.CLOSED:
@@ -204,7 +232,7 @@ var BoardList = React.createClass({
                 break;
         }
 
-        this.setState({filteredBoards: filteredBoards});
+        return filteredBoards;
     },
     render: function () {
         var boardList = null;
@@ -290,6 +318,64 @@ var BoardFilters = React.createClass({
                     <Filter isActive={this.props.filter == filters.INACTIVE} filter={filters.INACTIVE} onFilter={this.props.onFilter}>Inactive</Filter>
                 </li>
             </ul>
+        );
+    }
+});
+
+const sorts = {
+    ATTRIBUTES: {
+        NAME: "name",
+        DATE: "dateLastActivity"
+    },
+    ORDER: {
+        DESC: "desc",
+        ASC: "asc"
+    }
+};
+
+var BoardSorters = React.createClass({
+    render: function () {
+        return (
+            <ul className="nav nav-pills">
+                <li className="nav-item">
+                    <Sort isActive={this.props.sortAttribute == sorts.ATTRIBUTES.NAME} sortedByAttribute={this.props.sortAttribute} sortAttribute={sorts.ATTRIBUTES.NAME} sortOrder={this.props.sortOrder} onSort={this.props.onSort}>Name</Sort>
+                </li>
+                <li className="nav-item">
+                    <Sort isActive={this.props.sortAttribute == sorts.ATTRIBUTES.DATE} sortedByAttribute={this.props.sortAttribute} sortAttribute={sorts.ATTRIBUTES.DATE} sortOrder={this.props.sortOrder} onSort={this.props.onSort}>Last activity</Sort>
+                </li>
+            </ul>
+        );
+    }
+});
+
+var Sort = React.createClass({
+    propTypes: {
+        isActive: React.PropTypes.boolean,
+        sortAttribute: React.PropTypes.string,
+        sortOrder: React.PropTypes.string,
+        onSort: React.PropTypes.func
+    },
+    getDefaultProps: function () {
+        return {
+            sortAttribute: null,
+            sortOrder: sorts.ORDER.ASC,
+            isActive: false
+        }
+    },
+    handleClick: function (e) {
+        e.stopPropagation();
+        console.log(this.props.sortAttribute, this.props.sortOrder == sorts.ORDER.DESC ? sorts.ORDER.ASC : sorts.ORDER.DESC);
+        this.props.onSort(this.props.sortAttribute, this.props.sortOrder == sorts.ORDER.DESC ? sorts.ORDER.ASC : sorts.ORDER.DESC);
+    },
+    render: function () {
+        var icon = null;
+
+        if (this.props.sortedByAttribute == this.props.sortAttribute) {
+            icon = (<i className={"fa fa-sort-amount-" + this.props.sortOrder}></i>);
+        }
+
+        return (
+            <a onClick={this.handleClick} className={"nav-link" + (this.props.isActive ? " active" :"")} href="#">{icon}{this.props.children}</a>
         );
     }
 });
