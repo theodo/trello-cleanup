@@ -213,7 +213,7 @@ var BoardList = React.createClass({
         }
 
         if (prevProps.filter != this.props.filter) {
-             this.setState({filteredBoards: this.filterBoards(this.state.boards)});
+             this.setState({filteredBoards: this.sortBoards(this.filterBoards(this.state.boards))});
         }
 
         if (prevProps.sortAttribute != this.props.sortAttribute || prevProps.sortOrder != this.props.sortOrder) {
@@ -221,9 +221,7 @@ var BoardList = React.createClass({
         }
     },
     sortBoards: function (boards) {
-        var boards = _.orderBy(boards, [this.props.sortAttribute], [this.props.sortOrder]);
-
-        return boards;
+        return _.orderBy(boards, [this.props.sortAttribute], [this.props.sortOrder]);
     },
     filterBoards: function (boards) {
         var filteredBoards = boards;
