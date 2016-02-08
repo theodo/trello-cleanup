@@ -15,12 +15,6 @@
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd" crossorigin="anonymous">
-
-    <style media="screen" type="text/css">
-        .row {
-            margin-bottom: 10px;
-        }
-    </style>
 </head>
 <body>
     <div id="app"></div>
@@ -58,7 +52,7 @@ var TrelloCleaner = React.createClass({
     render: function () {
         return (
             <div className="container">
-                <div className="row">
+                <div className="row m-b-1">
                     <div className="col-sm-12">
                         <nav className="navbar navbar-dark bg-primary">
                             <a className="navbar-brand" href="#">Trello Cleaner</a>
@@ -68,7 +62,7 @@ var TrelloCleaner = React.createClass({
                         </nav>
                     </div>
                 </div>
-                <div className="row">
+                <div className="row m-b-1">
                     <div className="col-sm-4">
                         <OrganizationList onOrganizationChange={this.handleOrganizationChange} currentOrg={this.state.currentOrg} idOrganizations={this.props.idOrganizations} />
                     </div>
