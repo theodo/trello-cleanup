@@ -318,7 +318,7 @@ var Board = React.createClass({
                         <ul className="list-inline">
                             {this.state.admins.map(function (admin) {
                                 return (
-                                    <li className="list-inline-item">
+                                    <li key={admin.id} className="list-inline-item">
                                         <span className="label label-default">{admin.username}</span>
                                     </li>
                                 );
