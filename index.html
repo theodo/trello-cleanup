@@ -27,18 +27,22 @@ var TrelloCleaner = React.createClass({
             sortOrder: sorts.ORDER.ASC
         };
     },
+    getDefaultFilters: function () {
+        return {
+            filter: filters.ADMINISTRABLE
+        }
+    },
     getInitialState: function () {
         var initialState = {
-            currentOrg: null,
-            filter: null
+            currentOrg: null
         };
 
-        return _.merge(initialState, this.getDefaulSort());
+        return _.merge(initialState, this.getDefaulSort(), this.getDefaultFilters());
     },
     handleOrganizationChange: function (currentOrg) {
         this.setState(_.merge({
             currentOrg: currentOrg,
-        }, this.getDefaulSort()));
+        }, this.getDefaulSort(), this.getDefaultFilters()));
     },
     handleFilterBoards: function (filter) {
         this.setState({filter: filter});
