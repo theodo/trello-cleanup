@@ -67,14 +67,25 @@ var TrelloCleaner = React.createClass({
                     </div>
                 </div>
                 <div className="row m-b-1">
-                    <div className="col-sm-4">
-                        <OrganizationList onOrganizationChange={this.handleOrganizationChange} currentOrg={this.state.currentOrg} idOrganizations={this.props.idOrganizations} />
+                    <div className="col-sm-3">
+                        <OrganizationList
+                            onOrganizationChange={this.handleOrganizationChange}
+                            currentOrg={this.state.currentOrg}
+                            idOrganizations={this.props.idOrganizations}
+                        />
                     </div>
-                    <div className="col-sm-4">
-                        <BoardSorters onSort={this.handleSortBoards} sortAttribute={this.state.sortAttribute} sortOrder={this.state.sortOrder} />
+                    <div className="col-sm-3">
+                        <BoardSorters
+                            onSort={this.handleSortBoards}
+                            sortAttribute={this.state.sortAttribute}
+                            sortOrder={this.state.sortOrder}
+                        />
                     </div>
-                    <div className="col-sm-4">
-                        <BoardFilters onFilter={this.handleFilterBoards} filter={this.state.filter} />
+                    <div className="col-sm-6">
+                        <BoardFilters
+                            onFilter={this.handleFilterBoards}
+                            filter={this.state.filter}
+                        />
                     </div>
                 </div>
                 <div className="row">
