@@ -275,7 +275,6 @@ var Board = React.createClass({
         };
     },
     handleClick: function () {
-        console.log(this.props.board.closed);
         Trello.put(
             '/boards/'+this.props.board.id +'/closed',
             {value: !this.state.boardClosed},
@@ -406,7 +405,6 @@ var Sort = React.createClass({
     },
     handleClick: function (e) {
         e.stopPropagation();
-        console.log(this.props.sortAttribute, this.props.sortOrder == sorts.ORDER.DESC ? sorts.ORDER.ASC : sorts.ORDER.DESC);
         this.props.onSort(this.props.sortAttribute, this.props.sortOrder == sorts.ORDER.DESC ? sorts.ORDER.ASC : sorts.ORDER.DESC);
     },
     render: function () {
