@@ -80,6 +80,7 @@ var TrelloCleaner = React.createClass({
                             filter={this.state.filter}
                             sortAttribute={this.state.sortAttribute}
                             sortOrder={this.state.sortOrder}
+                            member={this.props.member}
                         >No boards found.</BoardList>
                     </div>
                 </div>
@@ -232,8 +233,8 @@ var BoardList = React.createClass({
         var boardList = null;
         if (this.props.currentOrg != null ) {
             boardList = this.state.filteredBoards.map(function (board) {
-                return <Board key={board.id} board={board} />;
-            });
+                return <Board key={board.id} board={board} member={this.props.member} />;
+            }, this);
         }
 
         if (_.isEmpty(boardList)) {
@@ -278,6 +279,7 @@ var Board = React.createClass({
     render: function () {
         var date = null != this.props.board.dateLastActivity ? 'last updated on ' + moment(this.props.board.dateLastActivity).fromNow() : 'may be inactive for a long time'
             , boardName = this.state.boardClosed ? <s>{this.props.board.name}</s> : <strong>{this.props.board.name}</strong>
+            , isAdmin = _.find(this.state.admins, _.bind(function (admin) { return this.props.member.id == admin.id; }, this))
         ;
 
         return (
@@ -286,7 +288,7 @@ var Board = React.createClass({
                     <div className="row">
                         <div className="checkbox pull-left">
                             <label htmlFor={this.props.board.id}>
-                                <input type="checkbox" name={this.props.board.name} defaultChecked={!this.props.board.closed} id={this.props.board.id} onClick={this.handleClick} />
+                                <input type="checkbox" disabled={!isAdmin} name={this.props.board.name} defaultChecked={!this.props.board.closed} id={this.props.board.id} onClick={this.handleClick} />
                                 {boardName}
                             </label>
                             &nbsp;<small className="text-muted">{date}</small>
