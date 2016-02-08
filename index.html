@@ -272,6 +272,15 @@ var Board = React.createClass({
             function (error) { alert(error.responseText); }
         );
     },
+    componentDidMount: function () {
+        Trello.get(
+            '/boards/' + this.props.board.id + '/members',
+            {filter: 'admins'},
+            _.bind(function (members) {
+                this.setState({admins: members});
+            }, this)
+        );
+    },
     render: function () {
         var date = null != this.props.board.dateLastActivity ? 'last updated on ' + moment(this.props.board.dateLastActivity).fromNow() : 'may be inactive for a long time'
             , boardName = this.state.boardClosed ? <s>{this.props.board.name}</s> : <strong>{this.props.board.name}</strong>
@@ -279,15 +288,30 @@ var Board = React.createClass({
 
         return (
             <li className="list-group-item clearfix">
-                <div className="checkbox pull-left">
-                    <label htmlFor={this.props.board.id}>
-                        <input type="checkbox" name={this.props.board.name} defaultChecked={!this.props.board.closed} id={this.props.board.id} onClick={this.handleClick} />
-                        {boardName}
-                    </label>
-                    &nbsp;<small className="text-muted">{date}</small>
-                </div>
-                <div className="pull-right">
-                    <a href={this.props.board.shortUrl} target="_blank">{this.props.board.shortUrl}&nbsp;<i className="fa fa-external-link"></i></a>
+                <div className="container">
+                    <div className="row">
+                        <div className="checkbox pull-left">
+                            <label htmlFor={this.props.board.id}>
+                                <input type="checkbox" name={this.props.board.name} defaultChecked={!this.props.board.closed} id={this.props.board.id} onClick={this.handleClick} />
+                                {boardName}
+                            </label>
+                            &nbsp;<small className="text-muted">{date}</small>
+                        </div>
+                        <div className="pull-right">
+                            <a href={this.props.board.shortUrl} target="_blank">{this.props.board.shortUrl}&nbsp;<i className="fa fa-external-link"></i></a>
+                        </div>
+                    </div>
+                    <div className="row text-muted">
+                        <ul className="list-inline">
+                            {this.state.admins.map(function (admin) {
+                                return (
+                                    <li className="list-inline-item">
+                                        <span className="label label-default">{admin.username}</span>
+                                    </li>
+                                );
+                            }, this)}
+                        </ul>
+                    </div>
                 </div>
             </li>
         );
