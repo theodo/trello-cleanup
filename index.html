@@ -238,6 +238,11 @@ var BoardList = React.createClass({
                     return moment().diff(moment(board.dateLastActivity), 'month') > 2;
                 });
                 break;
+            case filters.ADMINISTRABLE:
+                filteredBoards = _.filter(boards, _.bind(function (board) {
+                    return _.find(board.memberships, _.bind(function (membership) { return this.props.member.id == membership.idMember && membership.memberType == 'admin'; }, this))
+                }, this));
+                break;
         }
 
         return filteredBoards;
@@ -331,7 +336,8 @@ const filters = {
     RESET: null,
     CLOSED: "closed",
     OPENED: "opened",
-    INACTIVE: "inactive"
+    INACTIVE: "inactive",
+    ADMINISTRABLE: "administrable"
 }
 
 var BoardFilters = React.createClass({
@@ -340,6 +346,9 @@ var BoardFilters = React.createClass({
             <ul className="nav nav-pills" id="filter">
                 <li className="nav-item">
                     <Filter isActive={this.props.filter == filters.RESET} filter={filters.RESET} onFilter={this.props.onFilter}>All</Filter>
+                </li>
+                <li className="nav-item">
+                    <Filter isActive={this.props.filter == filters.ADMINISTRABLE} filter={filters.ADMINISTRABLE} onFilter={this.props.onFilter}>Administrable</Filter>
                 </li>
                 <li className="nav-item">
                     <Filter isActive={this.props.filter == filters.CLOSED} filter={filters.CLOSED} onFilter={this.props.onFilter}>Closed</Filter>
