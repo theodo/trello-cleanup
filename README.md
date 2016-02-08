@@ -9,7 +9,7 @@ opened, closed or inactive boards to close them.
 # How to install it?
 
 Well this is a quite simple application build in plain old javascript. All you have to
-do is open the ```trello.html``` page in your browser served by a server. You can use
+do is open the ```index.html``` page in your browser served by a server. You can use
 the ```http.server``` module of Python3 for example:
 
 ```bash
