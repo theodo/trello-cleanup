@@ -186,7 +186,7 @@ var OrganizationLink = React.createClass({
     },
     render: function () {
         return (
-            <a onClick={this.handleOrganizationChange} className={"dropdown-item" + (this.props.currentOrg == this.props.organization ? " active" : "") } href={"/#" + this.props.organization.name}>
+            <a onClick={this.handleOrganizationChange} className={"dropdown-item" + (this.props.currentOrg == this.props.organization ? " active" : "") } href={"#" + this.props.organization.name}>
                 <Organization organization={this.props.organization} />
             </a>
         );
